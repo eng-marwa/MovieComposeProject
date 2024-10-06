@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 class MovieRepositoryImpl(private val remoteDS: IMovieRemoteDS) : IMovieRepository {
     override suspend fun getRemoteNowShowingMovies(): Flow<NetworkResource<MovieResponse>>  = remoteDS.getNowShowingMovies()
+    override suspend fun getRemotePopularMovies(): Flow<NetworkResource<MovieResponse>> = remoteDS.getPopularMovies()
 
 //    override suspend fun getLocalNowShowingMovies(): Flow<MovieEntity> {
 //       //room db

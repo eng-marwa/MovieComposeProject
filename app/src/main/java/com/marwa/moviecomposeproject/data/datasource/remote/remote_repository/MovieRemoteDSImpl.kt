@@ -12,4 +12,8 @@ class MovieRemoteDSImpl(private val apiServices: ApiServices) : IMovieRemoteDS, 
     override suspend fun getNowShowingMovies(): Flow<NetworkResource<MovieResponse>> =
         apiRequest { apiServices.getNowShowingMovies(BuildConfig.API_KEY) }
 
+    override suspend fun getPopularMovies(): Flow<NetworkResource<MovieResponse>> = apiRequest {
+        apiServices.getPopularMovies(BuildConfig.API_KEY)
+    }
+
 }

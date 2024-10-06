@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface IMovieRepository {
     suspend fun getRemoteNowShowingMovies(): Flow<NetworkResource<MovieResponse>>
+    suspend fun getRemotePopularMovies(): Flow<NetworkResource<MovieResponse>>
 //    suspend fun getLocalNowShowingMovies(): Flow<MovieEntity>
 
 }

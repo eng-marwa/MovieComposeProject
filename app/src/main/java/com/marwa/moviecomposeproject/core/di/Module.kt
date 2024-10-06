@@ -1,5 +1,6 @@
 package com.marwa.moviecomposeproject.core.di
 
+import androidx.lifecycle.SavedStateHandle
 import com.marwa.moviecomposeproject.data.datasource.remote.interfaces.IMovieRemoteDS
 import com.marwa.moviecomposeproject.data.datasource.remote.network.ApiServices.Companion.createApiService
 import com.marwa.moviecomposeproject.data.datasource.remote.network.AuthInterceptor
@@ -9,17 +10,21 @@ import com.marwa.moviecomposeproject.data.datasource.remote.remote_repository.Mo
 import com.marwa.moviecomposeproject.domain.repository.IMovieRepository
 import com.marwa.moviecomposeproject.domain.repository.impl.MovieRepositoryImpl
 import com.marwa.moviecomposeproject.domain.usescase.GetNowShowingUseCase
+import com.marwa.moviecomposeproject.domain.usescase.GetPopularUseCase
 import com.marwa.moviecomposeproject.presentation.movies.viewmodel.MovieViewModel
-import com.marwa.moviecomposeproject.utils.MovieViewModelFactory
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val viewModelModule = module {
-    viewModel { MovieViewModel(get()) }
+    viewModel<MovieViewModel> { (savedStateHandle: SavedStateHandle) ->
+        MovieViewModel(savedStateHandle, get(), get())
+    }
+
 }
 
 val useCaseModule = module {
     factory { GetNowShowingUseCase(get()) }
+    factory { GetPopularUseCase(get()) }
 }
 val repositoryModule = module {
     factory { MovieRepositoryImpl(get()) as IMovieRepository }
