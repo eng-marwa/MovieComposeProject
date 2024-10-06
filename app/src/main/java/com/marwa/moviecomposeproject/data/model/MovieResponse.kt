@@ -19,4 +19,12 @@ data class Movie(
     @SerializedName("genre_ids") val genreIds: List<Int> = emptyList()
 )
 
+@Serializable
+data class MovieData(
+ val id: Int,
+    val title: String,
+    val posterPath: String,
+   val backdropPath: String,
+)
+
 

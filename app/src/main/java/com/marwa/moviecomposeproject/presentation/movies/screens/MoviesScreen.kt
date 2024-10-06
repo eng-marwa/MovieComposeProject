@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -29,13 +30,16 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import coil.compose.AsyncImage
+import com.marwa.moviecomposeproject.BuildConfig
 import com.marwa.moviecomposeproject.R
 import com.marwa.moviecomposeproject.core.di.ViewState
 import com.marwa.moviecomposeproject.data.model.Movie
 import com.marwa.moviecomposeproject.data.model.MovieResponse
+import com.marwa.moviecomposeproject.domain.entity.MovieEntity
 import com.marwa.moviecomposeproject.presentation.movies.viewmodel.MovieViewModel
 import com.marwa.moviecomposeproject.ui.theme.AppTypography
 import com.marwa.moviecomposeproject.ui.theme.seeMoreColor
@@ -46,8 +50,12 @@ import org.koin.androidx.compose.getViewModel
 import org.koin.core.parameter.parametersOf
 
 @Composable
-fun MoviesScreen(modifier: Modifier = Modifier, onItemClick: (Movie) -> Unit, savedStateHandle: SavedStateHandle) {
-    val viewModel: MovieViewModel = getViewModel(parameters = { parametersOf(savedStateHandle) })
+fun MoviesScreen(
+    modifier: Modifier = Modifier,
+    onItemClick: (movie: Movie) -> Unit,
+    viewStateHandle: SavedStateHandle
+) {
+    val viewModel: MovieViewModel = getViewModel(parameters = { parametersOf(viewStateHandle) })
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -57,26 +65,30 @@ fun MoviesScreen(modifier: Modifier = Modifier, onItemClick: (Movie) -> Unit, sa
             MovieAppBar()
         }
         item {
-            NowShowingMovies(viewModel, onItemClick = {
-                onItemClick(it)
-            })
+            NowShowingMovies(viewModel, onItemClick = { onItemClick(it) })
         }
         item {
-            PopularMovies(viewModel, onItemClick = {
-                onItemClick(it)
-            })
+            PopularMovies(viewModel, onItemClick = { onItemClick(it) })
         }
     }
 }
 
 @Composable
-fun showError() {
-
+fun showError(error: String) {
+    Text(
+        text = error,
+        modifier = Modifier.fillMaxWidth(),
+        textAlign = TextAlign.Center
+    )
 }
 
 @Composable
 fun ShowLoading() {
-
+    Text(
+        text = "Loading...",
+        modifier = Modifier.fillMaxWidth(),
+        textAlign = TextAlign.Center
+    )
 }
 
 @Composable
@@ -120,82 +132,78 @@ fun AppBarIcon(modifier: Modifier, icon: Painter, description: String) {
 }
 
 @Composable
-fun NowShowingMovies(viewModel: MovieViewModel, onItemClick: (Movie) -> Unit) {
+fun NowShowingMovies(viewModel: MovieViewModel, onItemClick: (movie: Movie) -> Unit) {
     val nowShowingState by viewModel.nowShowingMovies.collectAsState()
-    when (nowShowingState) {
-        is ViewState.Loading -> {
-            ShowLoading()
-        }
 
-        is ViewState.Error -> {
-            showError()
-        }
-
-        is ViewState.Loaded -> {
-            nowShowingState.data?.let {
-                NowShowingMoviesContent(it, onItemClick = onItemClick)
-            }
-
-        }
-
-        else -> {
-            // Show empty
-        }
-    }
-}
-
-@Composable
-fun NowShowingMoviesContent(nowShowingResponse: MovieResponse, onItemClick: (Movie) -> Unit) {
-
-    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+    Column {
         Section("Now Showing")
-        Spacer(
-            Modifier
-                .height(16.dp)
-        )
-        LazyRow {
-            items(nowShowingResponse.results) { it ->
-                NowShowingMovieItem(it, onItemClick = {
-                    onItemClick(it)
-                })
+        Spacer(modifier = Modifier.height(16.dp))
+        when (nowShowingState) {
+            is ViewState.Loaded -> {
+                nowShowingState.data?.let {
+                    NowShowingMoviesContent(
+                        it,
+                        viewModel,
+                        onItemClick = onItemClick
+                    )
+                }
+            }
+
+            is ViewState.Loading -> {
+                ShowLoading()
+            }
+
+            is ViewState.Error -> {
+                showError("Unable to load movies")
             }
         }
-
     }
 }
 
+@Composable
+fun NowShowingMoviesContent(
+    movieResponse: MovieResponse,
+    viewModel: MovieViewModel,
+    onItemClick: (movie: Movie) -> Unit
+) {
+    LazyRow {
+        items(movieResponse.results) { movie ->
+            NowShowingMovieItem(movie, viewModel = viewModel, onItemClick = { onItemClick(it) })
+        }
+    }
+
+}
 
 @Composable
-fun NowShowingMovieItem(movie: Movie, onItemClick: (Movie) -> Unit) {
+fun NowShowingMovieItem(
+    movie: Movie,
+    viewModel: MovieViewModel,
+    onItemClick: (movie: Movie) -> Unit
+) {
     Column(modifier = Modifier.padding(end = 16.dp)) {
         AsyncImage(
-            model = "https://image.tmdb.org/t/p/w500/${movie.posterPath}",
-            contentDescription = "movie poster",
-//            placeholder = painterResource(id = R.drawable.placeholder),
-//            error = painterResource(id = R.drawable.error),
+            model = BuildConfig.IMG_URL + movie.posterPath,
+            contentDescription = "now showing movie",
             modifier = Modifier
                 .width(143.dp)
                 .height(212.dp)
                 .clickable { onItemClick(movie) }
-
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = movie.title,
-            style = AppTypography.movieTitle,
-            overflow = TextOverflow.Ellipsis,
-            softWrap = true,
-            maxLines = 1, modifier = Modifier.width(143.dp)
+            style = AppTypography.movieTitle, overflow = TextOverflow.Ellipsis, maxLines = 1
         )
-        Spacer(Modifier.height(8.dp))
-        Rating(movie.voteAverage)
+        Spacer(modifier = Modifier.height(8.dp))
+        Rating(movie, "now_showing", viewModel)
+
     }
+
 }
 
 
 @Composable
 fun SeeMore(modifier: Modifier = Modifier) {
-
     Text(
         text = "See more",
         modifier = modifier
@@ -215,41 +223,42 @@ fun SeeMore(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun PopularMovies(viewModel: MovieViewModel, onItemClick: (Movie) -> Unit) {
+fun PopularMovies(viewModel: MovieViewModel, onItemClick: (movie: Movie) -> Unit) {
     val popularState by viewModel.popularMovies.collectAsState()
-    when (popularState) {
-        is ViewState.Loading -> {
-            ShowLoading()
-        }
-
-        is ViewState.Error -> {
-            showError()
-        }
-
-        is ViewState.Loaded -> {
-            popularState.data?.let {
-                PopularMoviesContent(popularResponse = it, onItemClick = onItemClick)
+    Column {
+        Section("Popular Movies")
+        when (popularState) {
+            is ViewState.Loaded -> {
+                popularState.data?.let {
+                    PopularMoviesContent(
+                        it,
+                        viewModel,
+                        onItemClick = onItemClick
+                    )
+                }
             }
 
-        }
+            is ViewState.Loading -> {
+                ShowLoading()
+            }
 
-        else -> {
-            // Show empty
+            is ViewState.Error -> {
+                showError("Unable to load movies")
+            }
         }
     }
 
 }
 
 @Composable
-fun PopularMoviesContent(popularResponse: MovieResponse, onItemClick: (Movie) -> Unit) {
-    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-        Section("Popular Movies")
-        Column {
-            popularResponse.results.forEach { it ->
-                PopularMovieItem(it, onItemClick = {
-                    onItemClick(it)
-                })
-            }
+fun PopularMoviesContent(
+    movieResponse: MovieResponse,
+    viewModel: MovieViewModel,
+    onItemClick: (movie: Movie) -> Unit
+) {
+    Column {
+        movieResponse.results.forEach { movie ->
+            PopularMovieItem(movie, viewModel, onItemClick = { onItemClick(it) })
         }
     }
 }
@@ -270,41 +279,42 @@ fun Section(sectionTitle: String) {
 }
 
 @Composable
-fun PopularMovieItem(movie: Movie, onItemClick: (Movie) -> Unit) {
-    Spacer(Modifier.height(16.dp))
-    Row {
+fun PopularMovieItem(movie: Movie, viewModel: MovieViewModel, onItemClick: (movie: Movie) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp)
+    ) {
         AsyncImage(
-            model = "https://image.tmdb.org/t/p/w500/${movie.posterPath}",
-            contentDescription = "movie poster",
-//            placeholder = painterResource(id = R.drawable.placeholder),
-//            error = painterResource(id = R.drawable.error),
+            model = BuildConfig.IMG_URL + movie.posterPath,
+            contentDescription = "popular movie",
             modifier = Modifier
                 .width(85.dp)
                 .height(120.dp)
                 .clickable { onItemClick(movie) }
         )
-        Spacer(Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(16.dp))
         Column {
             Text(
-                movie.title,
+                text = movie.title,
                 style = AppTypography.movieTitle,
                 overflow = TextOverflow.Visible,
-                minLines = 2, modifier = Modifier.width(117.dp)
+                maxLines = 2,
+                modifier = Modifier.width(117.dp)
             )
-            Spacer(Modifier.height(8.dp))
-            Rating(movie.voteAverage)
-            Spacer(Modifier.height(8.dp))
-            MovieTag()
-            Spacer(Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            Rating(movie, "popular", viewModel = viewModel)
+            Spacer(modifier = Modifier.height(8.dp))
+            MovieTag(movie)
+            Spacer(modifier = Modifier.height(8.dp))
             Row {
                 Image(
-                    painter = painterResource(id = R.drawable.clock),
+                    painter = painterResource(id = R.drawable.star),
                     contentDescription = "rating",
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(Modifier.width(4.dp))
-                Spacer(Modifier.width(4.dp))
-                Text("8.5", style = AppTypography.dateStyle)
+                Text(movie.releaseDate, style = AppTypography.dateStyle)
             }
 
         }
@@ -312,18 +322,18 @@ fun PopularMovieItem(movie: Movie, onItemClick: (Movie) -> Unit) {
 }
 
 @Composable
-fun MovieTag() {
-    Row {
-        TagItem(modifier = Modifier)
-        TagItem(modifier = Modifier)
-        TagItem(modifier = Modifier)
+fun MovieTag(movie: Movie) {
+    LazyRow {
+        items(if (movie.genreIds.size >= 3) 3 else movie.genreIds.size) { genreId ->
+            TagItem(modifier = Modifier, movie.genreIds[genreId])
+        }
     }
 }
 
 @Composable
-fun TagItem(modifier: Modifier) {
+fun TagItem(modifier: Modifier, genreId: Int) {
     Text(
-        text = "See",
+        text = "$genreId",
         modifier = modifier
             .padding(end = 8.dp)
             .border(
@@ -340,7 +350,7 @@ fun TagItem(modifier: Modifier) {
 }
 
 @Composable
-fun Rating(voteAverage: Double) {
+fun Rating(movie: Movie, type: String, viewModel: MovieViewModel) {
     Row {
         Image(
             painter = painterResource(id = R.drawable.star),
@@ -348,7 +358,25 @@ fun Rating(voteAverage: Double) {
             modifier = Modifier.size(16.dp)
         )
         Spacer(Modifier.width(4.dp))
-        Text("$voteAverage", style = AppTypography.ratingStyle)
+        Text("${movie.voteAverage}", style = AppTypography.ratingStyle)
+        Spacer(Modifier.width(4.dp))
+        Button(modifier = Modifier.width(24.dp).height(24.dp), onClick = {
+            viewModel.saveMovie(
+                MovieEntity(
+                    id = null,
+                    movie.title,
+                    movie.posterPath,
+                    movie.backdropPath, movie.overview, type,
+                )
+            )
+        }) {
+            Text("Save")
+        }
     }
 }
 
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+private fun MovieScreenPreview() {
+    // NowShowingMovies()
+}
