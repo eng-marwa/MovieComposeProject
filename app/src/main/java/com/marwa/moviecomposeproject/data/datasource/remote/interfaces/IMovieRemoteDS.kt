@@ -6,4 +6,5 @@ import kotlinx.coroutines.flow.Flow
 
 interface IMovieRemoteDS {
     suspend fun getNowShowingMovies():Flow<NetworkResource<MovieResponse>>
+    suspend fun getPopularMovies(): Flow<NetworkResource<MovieResponse>>
 }

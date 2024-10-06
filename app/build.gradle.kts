@@ -1,6 +1,10 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("org.jetbrains.kotlin.plugin.serialization")
+    id("com.google.devtools.ksp")
+    alias(libs.plugins.compose.compiler)
+
 }
 
 android {
@@ -90,11 +94,22 @@ dependencies {
     implementation(libs.logging.interceptor)
 
     //koin
-    implementation (libs.koin.androidx.compose)
+    implementation(libs.koin.androidx.compose)
 
 
     //viewmodel
     implementation(libs.androidx.lifecycle.viewmodel.compose.android)
     //navigation
     implementation(libs.androidx.navigation.compose)
+
+    //coil
+    implementation(libs.coil.compose)
+    //serialization
+    implementation(libs.kotlinx.serialization.json)
+//    //room
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.room.runtime)
+
+
 }

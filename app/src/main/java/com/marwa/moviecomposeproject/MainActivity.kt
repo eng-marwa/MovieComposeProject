@@ -20,9 +20,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MovieComposeProjectTheme {
-                AppRouter()
-
-
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    AppRouter(
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
             }
         }
     }

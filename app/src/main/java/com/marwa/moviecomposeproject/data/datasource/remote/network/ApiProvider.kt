@@ -7,22 +7,39 @@ import kotlinx.coroutines.flow.flowOn
 import retrofit2.Response
 
 open class ApiProvider {
-    fun <T> apiRequest(apiCall: suspend () -> Response<T>): Flow<NetworkResource<T>> {
+    fun <T : Any> apiRequest(apiCall: suspend () -> Response<T>): Flow<NetworkResource<T>> {
         return flow {
-            emit(NetworkResource<T>(NetworkStatus.Loading))
-            val response = apiCall()
-            if (response.isSuccessful) {
-                emit(NetworkResource(NetworkStatus.Success, response.body()))
-            } else {
-                println(
-                    "ApiProvider: apiRequest: response.message(): ${
-                        response.errorBody()?.string()
-                    } , ${response.message()} "
-                )
+            emit(NetworkResource.Loading<T>())
+            try {
+                val response = apiCall()
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body != null) {
+                        emit(NetworkResource.Success(body))
+                    } else {
+                        emit(
+                            NetworkResource.Failure(
+                                error = BaseException(
+                                    code = response.code(),
+                                    message = "Response body is null"
+                                )
+                            )
+                        )
+                    }
+                } else {
+                    emit(
+                        NetworkResource.Failure(
+                            error = BaseException(response.code(), response.message())
+                        )
+                    )
+                }
+            } catch (e: Exception) {
                 emit(
-                    NetworkResource(
-                        NetworkStatus.Failure,
-                        error = BaseException(response.code(), response.message())
+                    NetworkResource.Failure(
+                        error = BaseException(
+                            500,
+                            e.message ?: "Unknown error"
+                        )
                     )
                 )
             }
