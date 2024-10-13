@@ -67,5 +67,5 @@ The project follows the MVVM (Model-View-ViewModel) architecture pattern, which 
 
 ## Screenshots
 
-![Screenshot 1](screenshots/screenshot1.png)
-![Screenshot 2](screenshots/screenshot2.png)
+![Screenshot 1](screenshots/screenshot1.png, width="200")
+![Screenshot 2](screenshots/screenshot2.png, width="200")
