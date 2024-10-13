@@ -24,6 +24,13 @@ object AppTypography {
         fontSize = 14.sp,
         letterSpacing = 0.15.sp
     )
+    val movieTitleDetails = TextStyle(
+        fontFamily = FontFamily(Font(R.font.mulish_bold)),
+        fontWeight = FontWeight.Bold,
+        color = Color.Black,
+        fontSize = 20.sp,
+        letterSpacing = 0.15.sp
+    )
 
     val ratingStyle = TextStyle(
         fontFamily = FontFamily(Font(R.font.mulish)),
@@ -38,6 +45,22 @@ object AppTypography {
         fontWeight = FontWeight.Normal,
         color = Color.Black,
         fontSize = 14.sp,
+        letterSpacing = 0.15.sp
+    )
+
+    val overviewText = TextStyle(
+        fontFamily = FontFamily(Font(R.font.mulish)),
+        fontWeight = FontWeight.Normal,
+        color = overviewTextColor,
+        fontSize = 14.sp,
+        letterSpacing = 0.15.sp
+    )
+
+    val playTrailer = TextStyle(
+        fontFamily = FontFamily(Font(R.font.mulish)),
+        fontWeight = FontWeight.Black,
+        color = Color.White,
+        fontSize = 20.sp,
         letterSpacing = 0.15.sp
     )
 }

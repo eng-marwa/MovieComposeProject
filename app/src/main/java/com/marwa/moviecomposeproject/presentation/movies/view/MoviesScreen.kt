@@ -1,10 +1,9 @@
-package com.marwa.moviecomposeproject.presentation.movies.screens
+package com.marwa.moviecomposeproject.presentation.movies.view
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,44 +17,42 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.SavedStateHandle
 import coil.compose.AsyncImage
 import com.marwa.moviecomposeproject.BuildConfig
 import com.marwa.moviecomposeproject.R
 import com.marwa.moviecomposeproject.core.di.ViewState
 import com.marwa.moviecomposeproject.data.model.Movie
 import com.marwa.moviecomposeproject.data.model.MovieResponse
-import com.marwa.moviecomposeproject.domain.entity.MovieEntity
+import com.marwa.moviecomposeproject.presentation.common.AppBarIcon
+import com.marwa.moviecomposeproject.presentation.common.MovieTag
+import com.marwa.moviecomposeproject.presentation.common.Rating
+import com.marwa.moviecomposeproject.presentation.common.Section
 import com.marwa.moviecomposeproject.presentation.movies.viewmodel.MovieViewModel
 import com.marwa.moviecomposeproject.ui.theme.AppTypography
 import com.marwa.moviecomposeproject.ui.theme.seeMoreColor
 import com.marwa.moviecomposeproject.ui.theme.strokeColor
-import com.marwa.moviecomposeproject.ui.theme.tagBgColor
-import com.marwa.moviecomposeproject.ui.theme.tagTextColor
 import org.koin.androidx.compose.getViewModel
-import org.koin.core.parameter.parametersOf
 
 @Composable
 fun MoviesScreen(
     modifier: Modifier = Modifier,
     onItemClick: (movie: Movie) -> Unit,
-    viewStateHandle: SavedStateHandle
 ) {
-    val viewModel: MovieViewModel = getViewModel(parameters = { parametersOf(viewStateHandle) })
+    val viewModel: MovieViewModel = getViewModel()
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -74,7 +71,7 @@ fun MoviesScreen(
 }
 
 @Composable
-fun showError(error: String) {
+fun ShowError(error: String) {
     Text(
         text = error,
         modifier = Modifier.fillMaxWidth(),
@@ -122,28 +119,19 @@ fun MovieAppBar() {
     }
 }
 
-@Composable
-fun AppBarIcon(modifier: Modifier, icon: Painter, description: String) {
-    Image(
-        painter = icon,
-        contentDescription = description,
-        modifier = modifier
-    )
-}
 
 @Composable
 fun NowShowingMovies(viewModel: MovieViewModel, onItemClick: (movie: Movie) -> Unit) {
     val nowShowingState by viewModel.nowShowingMovies.collectAsState()
 
     Column {
-        Section("Now Showing")
+        Section("Now Showing", true)
         Spacer(modifier = Modifier.height(16.dp))
         when (nowShowingState) {
             is ViewState.Loaded -> {
                 nowShowingState.data?.let {
                     NowShowingMoviesContent(
                         it,
-                        viewModel,
                         onItemClick = onItemClick
                     )
                 }
@@ -154,7 +142,7 @@ fun NowShowingMovies(viewModel: MovieViewModel, onItemClick: (movie: Movie) -> U
             }
 
             is ViewState.Error -> {
-                showError("Unable to load movies")
+                ShowError("Unable to load movies")
             }
         }
     }
@@ -163,12 +151,11 @@ fun NowShowingMovies(viewModel: MovieViewModel, onItemClick: (movie: Movie) -> U
 @Composable
 fun NowShowingMoviesContent(
     movieResponse: MovieResponse,
-    viewModel: MovieViewModel,
     onItemClick: (movie: Movie) -> Unit
 ) {
     LazyRow {
         items(movieResponse.results) { movie ->
-            NowShowingMovieItem(movie, viewModel = viewModel, onItemClick = { onItemClick(it) })
+            NowShowingMovieItem(movie, onItemClick = { onItemClick(it) })
         }
     }
 
@@ -177,7 +164,6 @@ fun NowShowingMoviesContent(
 @Composable
 fun NowShowingMovieItem(
     movie: Movie,
-    viewModel: MovieViewModel,
     onItemClick: (movie: Movie) -> Unit
 ) {
     Column(modifier = Modifier.padding(end = 16.dp)) {
@@ -187,7 +173,8 @@ fun NowShowingMovieItem(
             modifier = Modifier
                 .width(143.dp)
                 .height(212.dp)
-                .clickable { onItemClick(movie) }
+                .clip(shape = RoundedCornerShape(12.dp))
+                .clickable { onItemClick(movie) }, contentScale = ContentScale.Crop
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
@@ -195,7 +182,7 @@ fun NowShowingMovieItem(
             style = AppTypography.movieTitle, overflow = TextOverflow.Ellipsis, maxLines = 1
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Rating(movie, "now_showing", viewModel)
+        Rating(movie)
 
     }
 
@@ -226,7 +213,7 @@ fun SeeMore(modifier: Modifier = Modifier) {
 fun PopularMovies(viewModel: MovieViewModel, onItemClick: (movie: Movie) -> Unit) {
     val popularState by viewModel.popularMovies.collectAsState()
     Column {
-        Section("Popular Movies")
+        Section("Popular Movies", true)
         when (popularState) {
             is ViewState.Loaded -> {
                 popularState.data?.let {
@@ -243,7 +230,7 @@ fun PopularMovies(viewModel: MovieViewModel, onItemClick: (movie: Movie) -> Unit
             }
 
             is ViewState.Error -> {
-                showError("Unable to load movies")
+                ShowError("Unable to load movies")
             }
         }
     }
@@ -258,28 +245,14 @@ fun PopularMoviesContent(
 ) {
     Column {
         movieResponse.results.forEach { movie ->
-            PopularMovieItem(movie, viewModel, onItemClick = { onItemClick(it) })
+            PopularMovieItem(movie, onItemClick = { onItemClick(it) })
         }
     }
 }
 
-@Composable
-fun Section(sectionTitle: String) {
-    Column {
-        Spacer(Modifier.height(24.dp))
-        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = sectionTitle,
-                textAlign = TextAlign.Start,
-                style = AppTypography.appTitle
-            )
-            SeeMore()
-        }
-    }
-}
 
 @Composable
-fun PopularMovieItem(movie: Movie, viewModel: MovieViewModel, onItemClick: (movie: Movie) -> Unit) {
+fun PopularMovieItem(movie: Movie, onItemClick: (movie: Movie) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -291,7 +264,8 @@ fun PopularMovieItem(movie: Movie, viewModel: MovieViewModel, onItemClick: (movi
             modifier = Modifier
                 .width(85.dp)
                 .height(120.dp)
-                .clickable { onItemClick(movie) }
+                .clip(shape = RoundedCornerShape(12.dp))
+                .clickable { onItemClick(movie) }, contentScale = ContentScale.Crop
         )
         Spacer(modifier = Modifier.width(16.dp))
         Column {
@@ -303,7 +277,9 @@ fun PopularMovieItem(movie: Movie, viewModel: MovieViewModel, onItemClick: (movi
                 modifier = Modifier.width(117.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Rating(movie, "popular", viewModel = viewModel)
+            Rating(movie)
+
+
             Spacer(modifier = Modifier.height(8.dp))
             MovieTag(movie)
             Spacer(modifier = Modifier.height(8.dp))
@@ -321,59 +297,6 @@ fun PopularMovieItem(movie: Movie, viewModel: MovieViewModel, onItemClick: (movi
     }
 }
 
-@Composable
-fun MovieTag(movie: Movie) {
-    LazyRow {
-        items(if (movie.genreIds.size >= 3) 3 else movie.genreIds.size) { genreId ->
-            TagItem(modifier = Modifier, movie.genreIds[genreId])
-        }
-    }
-}
-
-@Composable
-fun TagItem(modifier: Modifier, genreId: Int) {
-    Text(
-        text = "$genreId",
-        modifier = modifier
-            .padding(end = 8.dp)
-            .border(
-                width = 1.dp,
-                color = tagBgColor,
-                shape = RoundedCornerShape(16.dp) // Rounded corners
-            )
-            .background(
-                color = tagBgColor,
-                shape = RoundedCornerShape(16.dp) // Rounded corners
-            )
-            .padding(horizontal = 16.dp, vertical = 4.dp), color = tagTextColor
-    )
-}
-
-@Composable
-fun Rating(movie: Movie, type: String, viewModel: MovieViewModel) {
-    Row {
-        Image(
-            painter = painterResource(id = R.drawable.star),
-            contentDescription = "rating",
-            modifier = Modifier.size(16.dp)
-        )
-        Spacer(Modifier.width(4.dp))
-        Text("${movie.voteAverage}", style = AppTypography.ratingStyle)
-        Spacer(Modifier.width(4.dp))
-        Button(modifier = Modifier.width(24.dp).height(24.dp), onClick = {
-            viewModel.saveMovie(
-                MovieEntity(
-                    id = null,
-                    movie.title,
-                    movie.posterPath,
-                    movie.backdropPath, movie.overview, type,
-                )
-            )
-        }) {
-            Text("Save")
-        }
-    }
-}
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable

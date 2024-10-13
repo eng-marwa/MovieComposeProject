@@ -1,25 +1,20 @@
 package com.marwa.moviecomposeproject.presentation.movies.viewmodel
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.marwa.moviecomposeproject.core.di.ViewState
 import com.marwa.moviecomposeproject.data.datasource.remote.network.NetworkStatus
 import com.marwa.moviecomposeproject.data.model.MovieResponse
-import com.marwa.moviecomposeproject.domain.entity.MovieEntity
 import com.marwa.moviecomposeproject.domain.usescase.GetNowShowingUseCase
 import com.marwa.moviecomposeproject.domain.usescase.GetPopularUseCase
-import com.marwa.moviecomposeproject.domain.usescase.SaveMovieUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class MovieViewModel(
-    private val viewStateHandle: SavedStateHandle,
     private val nowShowingUseCase: GetNowShowingUseCase,
     private val popularUseCase: GetPopularUseCase,
-    private val saveMovieUseCase: SaveMovieUseCase,
 
     ) : ViewModel() {
     init {
@@ -64,12 +59,5 @@ class MovieViewModel(
     }
 
 
-    private var savedMovieState = MutableStateFlow(0L)
-    val savedMovie: StateFlow<Long> = savedMovieState.asStateFlow()
-    fun saveMovie(movieEntity: MovieEntity) {
-        viewModelScope.launch {
-            saveMovieUseCase.execute(movieEntity)
-                .let { savedMovieState.value = it }
-        }
-    }
+
 }

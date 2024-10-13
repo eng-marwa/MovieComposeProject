@@ -16,7 +16,5 @@ data class MovieEntity(
     val backdropPath: String,
     @ColumnInfo(name = "overview")
     val overview: String,
-    @ColumnInfo(name = "type")
-    val movieType: String
 
 )

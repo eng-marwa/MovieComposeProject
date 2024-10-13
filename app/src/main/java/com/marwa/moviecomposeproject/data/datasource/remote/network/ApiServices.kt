@@ -1,9 +1,11 @@
 package com.marwa.moviecomposeproject.data.datasource.remote.network
 
+import com.marwa.moviecomposeproject.data.model.CastResponse
 import com.marwa.moviecomposeproject.data.model.MovieResponse
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ApiServices {
@@ -16,5 +18,7 @@ interface ApiServices {
     suspend fun getNowShowingMovies(@Query("api_key") apiKey: String): Response<MovieResponse>
     @GET("movie/popular")
     suspend fun getPopularMovies(@Query("api_key") apiKey: String): Response<MovieResponse>
+    @GET("movie/{movieId}/credits")
+    suspend fun getMovieCast(@Path("movieId") movieId: Int,@Query("api_key") apiKey: String): Response<CastResponse>
 
 }
